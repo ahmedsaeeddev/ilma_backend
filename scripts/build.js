@@ -13,6 +13,9 @@ const ASSETS_TO_COPY = [
     'server.js',
     'package.json',
     'package-lock.json',
+    'vercel.json',
+    'netlify.toml',
+    'functions',
     '.env' // Optional: usually handled by environment variables in production, but included for complete copy
 ];
 

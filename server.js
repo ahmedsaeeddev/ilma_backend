@@ -286,32 +286,43 @@ io.on('connection', (socket) => {
 });
 
 // ─── Connect to MongoDB ───────────────────────────────────────────────
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => {
-    console.log('Connected to MongoDB');
-    console.log('Database URI:', process.env.MONGODB_URI);
+const MONGODB_URI = process.env.MONGODB_URI;
 
-    // Start server (using http server for Socket.io)
-    const PORT = process.env.PORT || 5000;
-    server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`🔌 Socket.io ready for live class connections`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('To create admin user, run: npm run create-admin');
-      }
-    });
+if (!MONGODB_URI) {
+  console.error('❌ MONGODB_URI is not defined in environment variables.');
+  console.error('Please make sure you have a .env file with MONGODB_URI or set it in your hosting platform.');
+} else {
+  mongoose.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
   })
-  .catch((error) => {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
-  });
+    .then(() => {
+      console.log('Connected to MongoDB');
+      // console.log('Database URI:', MONGODB_URI); // Commented out for security in logs
+
+      // Start server (using http server for Socket.io)
+      const PORT = process.env.PORT || 5000;
+      if (require.main === module) {
+        server.listen(PORT, () => {
+          console.log(`🚀 Server running on port ${PORT}`);
+          console.log(`🔌 Socket.io ready for live class connections`);
+          console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('To create admin user, run: npm run create-admin');
+          }
+        });
+      }
+    })
+    .catch((error) => {
+      console.error('MongoDB connection error:', error);
+      // Remove process.exit(1) to prevent serverless function crash
+    });
+}
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
   console.log('Unhandled Promise Rejection:', err.message);
-  process.exit(1);
 });
+
+// Export the app for Vercel
+module.exports = app;
